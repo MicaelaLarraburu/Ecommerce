@@ -7,18 +7,11 @@ const mates = [
   { nombre: "El gaucho", precio: 2300 }
 ];
 
-const carrito = []; // Array para almacenar los productos seleccionados
+const carrito = [];
+const historialCompras = [];
 
 function darBienvenida() {
-  const usuario = prompt("¡Bienvenido al ecommerce de mates! ¿Eres comprador o revendedor?");
-  if (usuario.toLowerCase() === "comprador") {
-    mostrarOpciones();
-  } else if (usuario.toLowerCase() === "revendedor") {
-    mostrarOpciones(true);
-  } else {
-    mostrarMensaje("Opción inválida. Por favor, intenta nuevamente.");
-    darBienvenida();
-  }
+  mostrarOpciones();
 }
 
 function mostrarMensaje(mensaje) {
@@ -28,26 +21,86 @@ function mostrarMensaje(mensaje) {
   contenedor.appendChild(parrafo);
 }
 
-function mostrarOpciones(esRevendedor) {
-  const opcion = prompt("¿Qué deseas hacer?\n1) Ver opciones de mates\n2) Buscar por nombre\n3) Filtrar por precio\n4) Ver carrito de compras");
+function mostrarOpciones() {
+  const contenedor = document.getElementById("contenedor");
+  contenedor.innerHTML = "";
 
-  if (opcion === "1") {
-    mostrarMates(esRevendedor);
-  } else if (opcion === "2") {
-    buscarPorNombre(esRevendedor);
-  } else if (opcion === "3") {
-    filtrarPorPrecio(esRevendedor);
-  } else if (opcion === "4") {
+  mostrarMensaje("¿Qué deseas hacer?");
+
+  const opciones = [
+    { numero: 1, texto: "Ver opciones de mates" },
+    { numero: 2, texto: "Buscar por nombre" },
+    { numero: 3, texto: "Filtrar por precio" },
+    { numero: 4, texto: "Ver carrito de compras" },
+    { numero: 5, texto: "Ver historial de compras" }
+  ];
+
+  opciones.forEach(opcion => {
+    const btnOpcion = document.createElement("button");
+    btnOpcion.textContent = opcion.texto;
+    btnOpcion.addEventListener("click", () => {
+      manejarOpcion(opcion.numero);
+    });
+    contenedor.appendChild(btnOpcion);
+  });
+}
+
+function manejarOpcion(opcion) {
+  const contenedor = document.getElementById("contenedor");
+  contenedor.innerHTML = "";
+
+  if (opcion === 1) {
+    mostrarMates();
+  } else if (opcion === 2) {
+    mostrarMensaje("Ingresa el nombre del mate:");
+    const inputNombre = document.createElement("input");
+    inputNombre.type = "text";
+    const btnBuscar = document.createElement("button");
+    btnBuscar.textContent = "Buscar";
+    btnBuscar.addEventListener("click", () => {
+      const nombreBuscado = inputNombre.value.trim();
+      if (nombreBuscado) {
+        buscarPorNombre(nombreBuscado);
+      } else {
+        mostrarMensaje("Nombre no válido. Por favor, intenta nuevamente.");
+        mostrarOpciones();
+      }
+    });
+    contenedor.appendChild(inputNombre);
+    contenedor.appendChild(btnBuscar);
+  } else if (opcion === 3) {
+    mostrarMensaje("Ingresa el rango de precios (precio mínimo - precio máximo):");
+    const inputRangoPrecios = document.createElement("input");
+    inputRangoPrecios.type = "text";
+    const btnFiltrar = document.createElement("button");
+    btnFiltrar.textContent = "Filtrar";
+    btnFiltrar.addEventListener("click", () => {
+      const rangoPrecios = inputRangoPrecios.value.trim();
+      const precios = rangoPrecios.split("-");
+      const precioMinimo = parseInt(precios[0]);
+      const precioMaximo = parseInt(precios[1]);
+      if (!isNaN(precioMinimo) && !isNaN(precioMaximo)) {
+        filtrarMatesPorPrecio(precioMinimo, precioMaximo);
+      } else {
+        mostrarMensaje("Rango de precios no válido. Por favor, intenta nuevamente.");
+        mostrarOpciones();
+      }
+    });
+    contenedor.appendChild(inputRangoPrecios);
+    contenedor.appendChild(btnFiltrar);
+  } else if (opcion === 4) {
     mostrarCarrito();
+  } else if (opcion === 5) {
+    mostrarHistorialCompras();
   } else {
     mostrarMensaje("Opción inválida. Por favor, intenta nuevamente.");
-    mostrarOpciones(esRevendedor);
+    mostrarOpciones();
   }
 }
 
-function mostrarMates(esRevendedor) {
+function mostrarMates() {
   const contenedor = document.getElementById("contenedor");
-  contenedor.innerHTML = ""; // Limpiamos el contenido del contenedor
+  contenedor.innerHTML = "";
 
   mostrarMensaje("Elige una opción de mate:");
 
@@ -60,7 +113,7 @@ function mostrarMates(esRevendedor) {
     card.appendChild(nombreMate);
 
     const precioMate = document.createElement("p");
-    precioMate.textContent = "Precio: $" + (esRevendedor ? mate.precio * 0.9 : mate.precio);
+    precioMate.textContent = "Precio: $" + mate.precio;
     card.appendChild(precioMate);
 
     const btnComprar = document.createElement("button");
@@ -88,16 +141,19 @@ function agregarAlCarrito(mate) {
       cantidad: 1
     });
   }
+
+  // Agregar el mate al historial de compras
+  historialCompras.push(mate);
 }
 
 function mostrarCarrito() {
   const contenedor = document.getElementById("contenedor");
-  contenedor.innerHTML = ""; // Limpiamos el contenido del contenedor
+  contenedor.innerHTML = "";
 
   if (carrito.length > 0) {
     mostrarMensaje("Carrito de compras:");
 
-    let precioTotal = 0; // Variable para almacenar el precio total
+    let precioTotal = 0;
 
     carrito.forEach((item, index) => {
       const card = document.createElement("div");
@@ -121,11 +177,11 @@ function mostrarCarrito() {
 
       contenedor.appendChild(card);
 
-      precioTotal += item.precio * item.cantidad; // Calculamos el precio total sumando los precios individuales de cada producto
+      precioTotal += item.precio * item.cantidad;
     });
 
     const precioTotalParrafo = document.createElement("p");
-    precioTotalParrafo.textContent = "Precio total: $" + precioTotal; // Mostramos el precio total en el carrito
+    precioTotalParrafo.textContent = "Precio total: $" + precioTotal;
     contenedor.appendChild(precioTotalParrafo);
 
     const btnContinuarComprando = document.createElement("button");
@@ -152,15 +208,52 @@ function eliminarDelCarrito(index) {
 }
 
 function finalizarCompra() {
-  carrito.length = 0; // Vaciar el carrito
+  carrito.length = 0;
 }
 
-function buscarPorNombre(esRevendedor) {
-  const nombreBuscado = prompt("Ingresa el nombre del mate que deseas buscar:");
+function mostrarHistorialCompras() {
   const contenedor = document.getElementById("contenedor");
-  contenedor.innerHTML = ""; // Limpiamos el contenido del contenedor
+  contenedor.innerHTML = "";
 
-  const matesEncontrados = mates.filter(mate => mate.nombre.toLowerCase() === nombreBuscado.toLowerCase());
+  if (historialCompras.length > 0) {
+    mostrarMensaje("Historial de compras:");
+
+    historialCompras.forEach((mate, index) => {
+      const card = document.createElement("div");
+      card.classList.add("card");
+
+      const nombreMate = document.createElement("h3");
+      nombreMate.textContent = mate.nombre;
+      card.appendChild(nombreMate);
+
+      const precioMate = document.createElement("p");
+      precioMate.textContent = "Precio: $" + mate.precio;
+      card.appendChild(precioMate);
+
+      contenedor.appendChild(card);
+    });
+  } else {
+    mostrarMensaje("Aún no has realizado compras.");
+  }
+}
+
+darBienvenida();
+
+function eliminarDelCarrito(index) {
+  carrito.splice(index, 1);
+}
+
+function finalizarCompra() {
+  carrito.length = 0;
+}
+
+function buscarPorNombre(nombreBuscado) {
+  const contenedor = document.getElementById("contenedor");
+  contenedor.innerHTML = "";
+
+  const matesEncontrados = mates.filter(mate =>
+    mate.nombre.toLowerCase().includes(nombreBuscado.toLowerCase())
+  );
 
   if (matesEncontrados.length > 0) {
     mostrarMensaje("Mates encontrados:");
@@ -174,7 +267,7 @@ function buscarPorNombre(esRevendedor) {
       card.appendChild(nombreMate);
 
       const precioMate = document.createElement("p");
-      precioMate.textContent = "Precio: $" + (esRevendedor ? mate.precio * 0.9 : mate.precio);
+      precioMate.textContent = "Precio: $" + mate.precio;
       card.appendChild(precioMate);
 
       const btnComprar = document.createElement("button");
@@ -190,18 +283,17 @@ function buscarPorNombre(esRevendedor) {
     });
   } else {
     mostrarMensaje("No se encontró ningún mate con ese nombre.");
+    mostrarOpciones();
   }
 }
 
-function filtrarPorPrecio(esRevendedor) {
-  const precioMaximo = parseInt(prompt("Ingresa el precio máximo deseado:"));
+function filtrarMatesPorPrecio(precioMinimo, precioMaximo) {
   const contenedor = document.getElementById("contenedor");
-  contenedor.innerHTML = ""; // Limpiamos el contenido del contenedor
+  contenedor.innerHTML = "";
 
-  const matesFiltrados = mates.filter(mate => {
-    const precio = esRevendedor ? mate.precio * 0.9 : mate.precio;
-    return precio <= precioMaximo;
-  });
+  const matesFiltrados = mates.filter(mate =>
+    mate.precio >= precioMinimo && mate.precio <= precioMaximo
+  );
 
   if (matesFiltrados.length > 0) {
     mostrarMensaje("Mates filtrados por precio:");
@@ -215,7 +307,7 @@ function filtrarPorPrecio(esRevendedor) {
       card.appendChild(nombreMate);
 
       const precioMate = document.createElement("p");
-      precioMate.textContent = "Precio: $" + (esRevendedor ? mate.precio * 0.9 : mate.precio);
+      precioMate.textContent = "Precio: $" + mate.precio;
       card.appendChild(precioMate);
 
       const btnComprar = document.createElement("button");
@@ -231,23 +323,8 @@ function filtrarPorPrecio(esRevendedor) {
     });
   } else {
     mostrarMensaje("No se encontraron mates dentro de ese rango de precio.");
+    mostrarOpciones();
   }
 }
 
-darBienvenida();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+darBienvenida(); 
